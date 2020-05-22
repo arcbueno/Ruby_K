@@ -46,13 +46,16 @@ module RUBY-SYNTAX
                     | Stmt Stmt [left]
                     | Skip
                     | SExp
+                    | "print" AExp
+                    | "print" BExp
+                    | "print" SExp
   
  
     // Regras estuturais/utilização
     rule S1:Stmt S2:Stmt => S1 ~> S2 [structural]
     rule Skip => .
 
-    // Regras para operaçes aritméticas e booleanas
+    // Regras para operaçoes aritméticas e booleanas
     rule I1:Int + I2:Int => I1 +Int I2
     rule I1:Int - I2:Int => I1 -Int I2
     rule I1:Int * I2:Int => I1 *Int I2
@@ -65,8 +68,10 @@ module RUBY-SYNTAX
 
     rule Str1:String + Str2:String => Str1 +String Str2 
 
-    rule Ids = _:Int => Skip
-    rule Ids = _:String => Skip
+
+    // Caso Ids esteja vazio
+    rule .Ids = _:Int => Skip
+    rule .Ids = _:String => Skip
 
     rule <k> I:Id = V:Int => Skip ... </k>
         <env> MEnv:Map => MEnv I |-> L </env>
@@ -84,6 +89,17 @@ module RUBY-SYNTAX
     rule <k> I:Id => V ... </k>
         <env> ... I |-> L ... </env>
         <store> ... L |-> V ... </store>
+
+
+    // rule <k> print(P:Printable,AEs => AEs); ...</k>
+    //     <out>... .List => ListItem(P) </out> [print]
+    
+    // context print HOLE:AExp
+
+    // rule <k> print A:AExp => A ...</k>
+    //     <out>... AExp => A </out> [print]
+    
+    //rule puts .AExp => . [structural]
 
 
     configuration <T>
