@@ -7,8 +7,8 @@ module RUBY-SYNTAX
     
     syntax Skip ::= "Skip"
 
-    syntax Block ::=  Stmt "end" 
-                    | Stmt
+    syntax Block ::=  Stmt 
+                    //| Stmt
     
     // Ruby é dinamicamente tipado
     syntax Assigner ::= Id "=" AExp [strict(2)]
@@ -41,6 +41,10 @@ module RUBY-SYNTAX
                     | "(" AExp ")" [bracket]
 
     syntax Stmt ::= AExp
+                    | "if" BExp Block "end" [strict(1)]
+                    | "if" BExp Block ElsIfStmt "end" [strict(1)] 
+                    //| "unless" BExp Block ElsIfStmt
+                    | "while" BExp Block 
                     | BExp
                     | Assigner
                     | Stmt Stmt [left]
@@ -48,9 +52,25 @@ module RUBY-SYNTAX
                     | SExp
   
  
+    // elsif para as estruturas de controle
+    syntax ElsIfStmt ::= "elsif" BExp Block 
+                        | "else" Block 
+                        | "elsif" BExp Block ElsIfStmt 
+
+
+
     // Regras estuturais/utilização
     rule S1:Stmt S2:Stmt => S1 ~> S2 [structural]
     rule Skip => .
+
+    //Regras Estruturas de controle
+    rule if  true  S:Stmt end => S 
+    rule if  false  _  end => Skip
+    rule if  true  B S:ElsIfStmt end => B 
+    rule if  false  _  S:ElsIfStmt end => S
+    rule elsif  B:BExp  S1:Stmt  S2:ElsIfStmt => if  B   S1   S2 end
+    rule elsif  B:BExp   S:Stmt => if  B   S end
+    rule else  S  => S 
 
     // Regras para operaçes aritméticas e booleanas
     rule I1:Int + I2:Int => I1 +Int I2
@@ -63,27 +83,32 @@ module RUBY-SYNTAX
     rule I1:Int > I2:Int => I1 >Int I2
     rule I1:Int >= I2:Int => I1 >=Int I2
 
+    //regra de ID
+    rule <k> I:Id => V ... </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> V ... </store>
+
+
     rule Str1:String + Str2:String => Str1 +String Str2 
 
-    rule Ids = _:Int => Skip
-    rule Ids = _:String => Skip
-
+   
     rule <k> I:Id = V:Int => Skip ... </k>
         <env> MEnv:Map => MEnv I |-> L </env>
-        <store> MStore:Map => MStore L |-> V </store>
-        <loc> L:Int => L +Int 1 </loc>
+       <store> MStore:Map => MStore L |-> V </store>
+       <loc> L:Int => L +Int 1 </loc>
+   when notBool I in keys(MEnv) 
 
     rule <k> I:Id = V:Int => Skip ... </k>
         <env> ... I |-> L ... </env>
         <store> ... L |-> (_ => V) ... </store>
+    
 
     // rule <k> I1:Id = I2:Id => I1 = V ... </k>
     //     <env> ... I2 |-> L ... </env>
     //     <store> ... L |-> V  ... </store>
 
-    rule <k> I:Id => V ... </k>
-        <env> ... I |-> L ... </env>
-        <store> ... L |-> V ... </store>
+    //https://github.com/kframework/k/blob/master/k-distribution/tutorial/1_k/4_imp%2B%2B/lesson_8/imp.k  'print' para imprimir as informações
+
 
 
     configuration <T>
@@ -110,3 +135,4 @@ module RUBY
 
     syntax KResult ::= Int | Bool
 endmodule
+
