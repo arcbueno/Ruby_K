@@ -53,8 +53,10 @@ module RUBY-SYNTAX
                     | Stmt Stmt [left]
                     | Skip
                     | SExp
+                    | IfTernary
   
- 
+    syntax IfTernary ::= BExp "?" Stmt ":" Stmt
+
     // elsif para as estruturas de controle
     syntax ElsIfStmt ::= "elsif" BExp Block 
                         | "else" Block 
@@ -66,7 +68,7 @@ module RUBY-SYNTAX
     rule S1:Stmt S2:Stmt => S1 ~> S2 [structural]
     rule Skip => .
 
-    //Regras Estruturas de controle
+    // Regras Estruturas de controle
     rule if  true  S:Stmt end => S 
     rule if  false  _  end => Skip
     rule if  true  B S:ElsIfStmt end => B 
@@ -74,6 +76,10 @@ module RUBY-SYNTAX
     rule elsif  B:BExp  S1:Stmt  S2:ElsIfStmt => if  B   S1   S2 end
     rule elsif  B:BExp   S:Stmt => if  B   S end
     rule else  S  => S 
+
+    // Regra de if ternário
+    rule B:BExp ? S1:Stmt : S2:Stmt => if B S1 else S2 end
+    //rule false ? S1:Stmt : S2:Stmt => S2
 
     // Regras para operaçes aritméticas e booleanas
     rule I1:Int + I2:Int => I1 +Int I2
