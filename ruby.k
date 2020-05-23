@@ -8,9 +8,7 @@ module RUBY-SYNTAX
     syntax Skip ::= "Skip"
 
     syntax Block ::=  Stmt 
-                    //| Stmt
     
-    // Ruby é dinamicamente tipado
     syntax Assigner ::= Id "=" AExp [strict(2)]
                     | Id "=" BExp [strict(2)]
                     | Id "=" SExp [strict(2)]
@@ -23,6 +21,11 @@ module RUBY-SYNTAX
                     | AExp ">" AExp [strict]
                     | AExp ">=" AExp [strict]
                     | "(" BExp ")" [bracket]
+                    | Id
+                    | BExp "and" BExp [seqstrict, left]
+                    | BExp "or" BExp [seqstrict, left]
+                    | "!" BExp [seqstrict, left]
+                    //| BExp BExp [left]
     
     // String
     syntax SExp ::= String
@@ -83,6 +86,18 @@ module RUBY-SYNTAX
     rule I1:Int > I2:Int => I1 >Int I2
     rule I1:Int >= I2:Int => I1 >=Int I2
 
+    // Regras de operação booleana
+    rule true or false => true
+    rule true or true => true
+    rule false or false => false
+    rule false or true => true
+    rule true and false => false
+    rule true and true => true
+    rule false and false => false
+    rule false and true => false
+    rule ! true => false
+    rule ! false => true
+ 
     //regra de ID
     rule <k> I:Id => V ... </k>
         <env> ... I |-> L ... </env>
