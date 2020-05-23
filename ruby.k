@@ -4,13 +4,14 @@ module RUBY-SYNTAX
     syntax Pgm ::= Block
 
     syntax Ids ::= List{Id, ","}
+    syntax AExps ::= List{AExp,","}
+    syntax Stmts ::= List{Stmt,""}
     
     syntax Skip ::= "Skip"
 
     syntax Block ::=  Stmt 
                     //| Stmt
     
-    // Ruby é dinamicamente tipado
     syntax Assigner ::= Id "=" AExp [strict(2)]
                     | Id "=" BExp [strict(2)]
                     | Id "=" SExp [strict(2)]
@@ -26,9 +27,8 @@ module RUBY-SYNTAX
     
     // String
     syntax SExp ::= String
-                    | "(" SExp ")" [bracket]
-                    | String "+" SExp [seqstrict,left]
-                    | Id
+                    //| String "+" SExp [seqstrict,left]
+                    //| Id
 
     
     // Aritmético
@@ -47,7 +47,7 @@ module RUBY-SYNTAX
                     | "while" BExp Block 
                     | BExp
                     | Assigner
-                    | Stmt Stmt [left]
+                    //| Stmt Stmt [left]
                     | Skip
                     | SExp
   
@@ -56,7 +56,6 @@ module RUBY-SYNTAX
     syntax ElsIfStmt ::= "elsif" BExp Block 
                         | "else" Block 
                         | "elsif" BExp Block ElsIfStmt 
-
 
 
     // Regras estuturais/utilização
@@ -89,19 +88,51 @@ module RUBY-SYNTAX
         <store> ... L |-> V ... </store>
 
 
-    rule Str1:String + Str2:String => Str1 +String Str2 
+    //rule Str1:String + Str2:String => Str1 +String Str2 
 
-   
-    rule <k> I:Id = V:Int => Skip ... </k>
+    // Regras para Int
+    rule <k> I:Id = V:AExp => Skip ... </k>
         <env> MEnv:Map => MEnv I |-> L </env>
        <store> MStore:Map => MStore L |-> V </store>
        <loc> L:Int => L +Int 1 </loc>
-   when notBool I in keys(MEnv) 
+    when notBool I in keys(MEnv) 
 
-    rule <k> I:Id = V:Int => Skip ... </k>
+    rule <k> I:Id = V:AExp => Skip ... </k>
         <env> ... I |-> L ... </env>
         <store> ... L |-> (_ => V) ... </store>
+
+    // Regras pra String
+    rule <k> I:Id = V:SExp => Skip ... </k>
+        <env> MEnv:Map => MEnv I |-> L </env>
+        <store> MStore:Map => MStore L |-> "" </store>
+        <loc> L:Int => L +Int 1 </loc>
+
+    rule <k> I:Id = V:SExp => Skip ... </k>
+        <env>... I |-> L ...</env>
+        <store> ... L |-> (_ => V) ... </store>
+        
     
+    // rule <k> I:Id = V:BExp => Skip ... </k>
+    //     <env> MEnv:Map => MEnv I |-> L </env>
+    //    <store> MStore:Map => MStore L |-> V </store>
+    //    <loc> L:Int => L +Int 1 </loc>
+
+    // rule <k> I:Id = V:SExp => Skip ... </k>
+    //     <env> MEnv:Map => MEnv I |-> L </env>
+    //    <store> MStore:Map => MStore L |-> V </store>
+    //    <loc> L:Int => L +Int 1 </loc>
+
+    
+
+    // rule <k> I:Id = V:String => Skip ... </k>
+    //     <env> MEnv:Map => MEnv I |-> L </env>
+    //    <store> MStore:Map => MStore L |-> V </store>
+    //    <loc> L:Int => L +Int 1 </loc>
+//    when notBool I in keys(MEnv) 
+
+    // rule <k> I:Id = V:String => Skip ... </k>
+    //     <env> ... I |-> L ... </env>
+    //     <store> ... L |-> (_ => V) ... </store>    
 
     // rule <k> I1:Id = I2:Id => I1 = V ... </k>
     //     <env> ... I2 |-> L ... </env>
