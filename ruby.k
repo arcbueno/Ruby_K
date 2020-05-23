@@ -8,9 +8,7 @@ module RUBY-SYNTAX
     syntax Skip ::= "Skip"
 
     syntax Block ::=  Stmt 
-                    //| Stmt
     
-    // Ruby é dinamicamente tipado
     syntax Assigner ::= Id "=" AExp [strict(2)]
                     | Id "=" BExp [strict(2)]
                     | Id "=" SExp [strict(2)]
@@ -23,6 +21,11 @@ module RUBY-SYNTAX
                     | AExp ">" AExp [strict]
                     | AExp ">=" AExp [strict]
                     | "(" BExp ")" [bracket]
+                    | Id
+                    | BExp "and" BExp [seqstrict, left]
+                    | BExp "or" BExp [seqstrict, left]
+                    | "!" BExp [seqstrict, left]
+                    //| BExp BExp [left]
     
     // String
     syntax SExp ::= String
@@ -50,8 +53,10 @@ module RUBY-SYNTAX
                     | Stmt Stmt [left]
                     | Skip
                     | SExp
+                    | IfTernary
   
- 
+    syntax IfTernary ::= BExp "?" Stmt ":" Stmt
+
     // elsif para as estruturas de controle
     syntax ElsIfStmt ::= "elsif" BExp Block 
                         | "else" Block 
@@ -63,7 +68,7 @@ module RUBY-SYNTAX
     rule S1:Stmt S2:Stmt => S1 ~> S2 [structural]
     rule Skip => .
 
-    //Regras Estruturas de controle
+    // Regras Estruturas de controle
     rule if  true  S:Stmt end => S 
     rule if  false  _  end => Skip
     rule if  true  B S:ElsIfStmt end => B 
@@ -71,6 +76,10 @@ module RUBY-SYNTAX
     rule elsif  B:BExp  S1:Stmt  S2:ElsIfStmt => if  B   S1   S2 end
     rule elsif  B:BExp   S:Stmt => if  B   S end
     rule else  S  => S 
+
+    // Regra de if ternário
+    rule B:BExp ? S1:Stmt : S2:Stmt => if B S1 else S2 end
+    //rule false ? S1:Stmt : S2:Stmt => S2
 
     // Regras para operaçes aritméticas e booleanas
     rule I1:Int + I2:Int => I1 +Int I2
@@ -83,6 +92,18 @@ module RUBY-SYNTAX
     rule I1:Int > I2:Int => I1 >Int I2
     rule I1:Int >= I2:Int => I1 >=Int I2
 
+    // Regras de operação booleana
+    rule true or false => true
+    rule true or true => true
+    rule false or false => false
+    rule false or true => true
+    rule true and false => false
+    rule true and true => true
+    rule false and false => false
+    rule false and true => false
+    rule ! true => false
+    rule ! false => true
+ 
     //regra de ID
     rule <k> I:Id => V ... </k>
         <env> ... I |-> L ... </env>
