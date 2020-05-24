@@ -1,4 +1,5 @@
-x = 1
-y = 3
-
-1 == 2 ? x = 2 : x = 3
+i = 0
+x = 3
+while i < x do
+    i = i + 1
+end

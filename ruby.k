@@ -47,7 +47,7 @@ module RUBY-SYNTAX
                     | "if" BExp Block "end" [strict(1)]
                     | "if" BExp Block ElsIfStmt "end" [strict(1)] 
                     //| "unless" BExp Block ElsIfStmt
-                    | "while" BExp Block 
+                    | "while" BExp "do" Block "end" 
                     | BExp
                     | Assigner
                     | Stmt Stmt [left]
@@ -81,6 +81,15 @@ module RUBY-SYNTAX
     rule B:BExp ? S1:Stmt : S2:Stmt => if B S1 else S2 end
     //rule false ? S1:Stmt : S2:Stmt => S2
 
+
+
+     //regras de estrutura de repetição
+    //rule while B:BExp S:Stmt  => if  B  do  S  while B  S  end [structural]
+    rule while B:BExp do S:Stmt end => if  B  S  while B do S end  end [structural]
+
+
+
+
     // Regras para operaçes aritméticas e booleanas
     rule I1:Int + I2:Int => I1 +Int I2
     rule I1:Int - I2:Int => I1 -Int I2
@@ -103,6 +112,8 @@ module RUBY-SYNTAX
     rule false and true => false
     rule ! true => false
     rule ! false => true
+
+   
  
     //regra de ID
     rule <k> I:Id => V ... </k>
