@@ -13,6 +13,8 @@ module RUBY-SYNTAX
                     | Id "=" BExp [strict(2)]
                     | Id "=" SExp [strict(2)]
 
+
+
     // Booleano
     syntax BExp ::= Bool
                     | AExp "==" AExp [strict]
@@ -54,6 +56,10 @@ module RUBY-SYNTAX
                     | Skip
                     | SExp
                     | IfTernary
+                    | AExpIncrement
+    
+    // Incrementação
+    syntax AExpIncrement ::= Id "++"                
   
     syntax IfTernary ::= BExp "?" Stmt ":" Stmt
 
@@ -133,6 +139,11 @@ module RUBY-SYNTAX
     rule <k> I:Id = V:Int => Skip ... </k>
         <env> ... I |-> L ... </env>
         <store> ... L |-> (_ => V) ... </store>
+
+        // Incrementação             
+         rule <k> I:Id ++ => Skip ... </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> (V => V +Int 1) ... </store>
     
 
     // rule <k> I1:Id = I2:Id => I1 = V ... </k>
