@@ -4,10 +4,16 @@ module RUBY-SYNTAX
     syntax Pgm ::= Block
 
     syntax Ids ::= List{Id, ","}
+    syntax AExps ::= List{Printable, ","}
+    //syntax Stmts ::= List{Stmt,""}
+
+    syntax Printable ::= AExp  // | String | Bool
     
     syntax Skip ::= "Skip"
 
-    syntax Block ::=  Stmt 
+    syntax Block ::= Stmt
+                    | Stmt Stmt [left]  
+                    
     
     syntax Assigner ::= Id "=" AExp [strict(2)]
                     | Id "=" BExp [strict(2)]
@@ -70,11 +76,15 @@ module RUBY-SYNTAX
                     | "for" Id "in" ArrayList Block "end" 
                     | BExp
                     | Assigner
-                    | Stmt Stmt [left]
                     | Skip
                     | SExp
-                    | IfTernary
-  
+                    | IfTernary                  
+                    | PrintExp
+                    //> PrintExp Stmt [strict(1)]
+    
+    syntax PrintExp ::= "print" AExps [left]
+                        | "puts" AExps [left]
+                    
     syntax IfTernary ::= BExp "?" Stmt ":" Stmt
 
     // elsif para as estruturas de controle
@@ -82,12 +92,11 @@ module RUBY-SYNTAX
                         | "else" Block 
                         | "elsif" BExp Block ElsIfStmt 
 
-
-
     // Regras estuturais/utilização
     rule S1:Stmt S2:Stmt => S1 ~> S2 [structural]
+    //rule P:PrintExp S1:Stmt => P ~> Stmt
     rule Skip => .
-
+   
     // Regras Estruturas de controle
     rule if  true  S:Stmt end => S 
     rule if  false  _  end => Skip
@@ -99,7 +108,6 @@ module RUBY-SYNTAX
 
     // Regra de if ternário
     rule B:BExp ? S1:Stmt : S2:Stmt => if B S1 else S2 end
-    //rule false ? S1:Stmt : S2:Stmt => S2
 
 
 
@@ -158,7 +166,6 @@ module RUBY-SYNTAX
         <store> ... L |-> V ... </store>
 
     rule Str1:String + Str2:String => Str1 +String Str2 
-
    
     rule <k> I:Id = V:AExp => Skip ... </k>
         <env> MEnv:Map => MEnv I |-> L </env>
@@ -204,15 +211,22 @@ module RUBY-SYNTAX
     rule <k> I:Id ++ => Skip ... </k>
         <env> ... I |-> L ... </env>
         <store> ... L |-> (V => V +Int 1) ... </store>
+    context print HOLE:Printable, AEs:AExps
+    
+    rule <k> print P:Printable,AEs => print AEs ...</k>
+       <output>... .List => ListItem(P) </output>  [print]
+    
+    rule print .AExps => .  [structural]
+    
+    rule <k> puts P:Printable,AEs:AExps => puts AEs ...</k>
+       <output>... .List => ListItem(P) </output>  [print]
+    
+    rule puts .AExps => .  [structural]
+    
     
 
-    // rule <k> I1:Id = I2:Id => I1 = V ... </k>
-    //     <env> ... I2 |-> L ... </env>
-    //     <store> ... L |-> V  ... </store>
 
     //https://github.com/kframework/k/blob/master/k-distribution/tutorial/1_k/4_imp%2B%2B/lesson_8/imp.k  'print' para imprimir as informações
-
-
 
     configuration <T>
         <k> $PGM:Pgm </k>
@@ -228,6 +242,7 @@ module RUBY-SYNTAX
         <env> .Map </env>
         <store> .Map </store>
         <loc> 1 </loc>
+        <output color="Orchid" stream="stdout"> .List </output>
     </T>
 
 endmodule
