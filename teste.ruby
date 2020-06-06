@@ -1,5 +1,4 @@
-i = 0
-x = 3
-while i < x do
-    i++
+i=1
+for fruit in [1, 2, 4,5]
+ i++
 end
