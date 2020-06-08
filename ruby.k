@@ -17,7 +17,10 @@ module RUBY-SYNTAX
     
     syntax Assigner ::= Id "=" AExp [strict(2)]
                     | Id "=" BExp [strict(2)]
-                    | Id "=" SExp [strict(2)]
+                    | Id "=" SExp //[strict(2)]
+                    | Id "=" ArrayList
+
+
 
     // Booleano
     syntax BExp ::= Bool
@@ -35,8 +38,8 @@ module RUBY-SYNTAX
     
     // String
     syntax SExp ::= String
-                    | "(" SExp ")" [bracket]
-                    | String "+" SExp [seqstrict,left]
+                    //| "(" SExp ")" [bracket]
+                    | SExp "+" SExp [seqstrict, left]
                     | Id
 
     
@@ -48,12 +51,29 @@ module RUBY-SYNTAX
                     | AExp "-" AExp [seqstrict]
                     | AExp "+" AExp [seqstrict]
                     | "(" AExp ")" [bracket]
+                    | AExpIncrement
+    
+    // Incrementação
+    syntax AExpIncrement ::= Id "++"   
+
+    //Types
+    syntax Types ::= Id
+                    | AExp
+                    | BExp
+                    | SExp
                     
+    //List
+    syntax TypeList ::= List{Types, ","}
+    syntax ArrayList ::= Id
+                        |"[" TypeList "]"
+                                      
+
     syntax Stmt ::= AExp
                     | "if" BExp Block "end" [strict(1)]
                     | "if" BExp Block ElsIfStmt "end" [strict(1)] 
                     //| "unless" BExp Block ElsIfStmt
-                    | "while" BExp Block 
+                    | "while" BExp "do" Block "end" 
+                    | "for" Id "in" ArrayList Block "end" 
                     | BExp
                     | Assigner
                     | Skip
@@ -89,6 +109,32 @@ module RUBY-SYNTAX
     // Regra de if ternário
     rule B:BExp ? S1:Stmt : S2:Stmt => if B S1 else S2 end
 
+
+
+     //regras de estrutura de repetição
+    //rule while B:BExp S:Stmt  => if  B  do  S  while B  S  end [structural]
+    rule while B:BExp do S:Stmt end => if  B  S  while B do S end  end [structural]
+  
+    rule <k>
+            for I:Id in [ (V:Types, Vs:TypeList) ] B:Block end
+            => B ~> for I in [ Vs:TypeList ] B end
+            ... 
+        </k>
+        <env> MEnv:Map => MEnv I |-> L </env>
+        <store> MStore:Map => MStore L |-> V </store>
+        <loc> L:Int => L +Int 1 </loc>
+        when notBool (I in keys(MEnv))
+
+    rule <k>
+            for I:Id in [ (V:Types, Vs:TypeList) ] B:Block end
+            => B ~> for I in  [Vs:TypeList]  B end
+            ... 
+        </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> (_ => V) ... </store>
+
+    rule for I:Id in  [.TypeList]   B:Block end => Skip
+
     // Regras para operaçes aritméticas e booleanas
     rule I1:Int + I2:Int => I1 +Int I2
     rule I1:Int - I2:Int => I1 -Int I2
@@ -111,6 +157,8 @@ module RUBY-SYNTAX
     rule false and true => false
     rule ! true => false
     rule ! false => true
+
+   
  
     //regra de ID
     rule <k> I:Id => V ... </k>
@@ -119,16 +167,50 @@ module RUBY-SYNTAX
 
     rule Str1:String + Str2:String => Str1 +String Str2 
    
-    rule <k> I:Id = V:Int => Skip ... </k>
+    rule <k> I:Id = V:AExp => Skip ... </k>
         <env> MEnv:Map => MEnv I |-> L </env>
        <store> MStore:Map => MStore L |-> V </store>
        <loc> L:Int => L +Int 1 </loc>
    when notBool I in keys(MEnv) 
 
-    rule <k> I:Id = V:Int => Skip ... </k>
+    rule <k> I:Id = V:AExp => Skip ... </k>
         <env> ... I |-> L ... </env>
         <store> ... L |-> (_ => V) ... </store>
 
+    rule <k> I:Id = V:BExp => Skip ... </k>
+        <env> MEnv:Map => MEnv I |-> L </env>
+       <store> MStore:Map => MStore L |-> V </store>
+       <loc> L:Int => L +Int 1 </loc>
+   when notBool I in keys(MEnv) 
+
+    rule <k> I:Id = V:BExp => Skip ... </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> (_ => V) ... </store>
+
+    rule <k> I:Id = V:SExp => Skip ... </k>
+        <env> MEnv:Map => MEnv I |-> L </env>
+       <store> MStore:Map => MStore L |-> V </store>
+       <loc> L:Int => L +Int 1 </loc>
+   when notBool I in keys(MEnv) 
+
+    rule <k> I:Id = V:SExp => Skip ... </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> (_ => V) ... </store>
+
+    rule <k> I:Id = V:ArrayList => Skip ... </k>
+        <env> MEnv:Map => MEnv I |-> L </env>
+       <store> MStore:Map => MStore L |-> V </store>
+       <loc> L:Int => L +Int 1 </loc>
+   when notBool I in keys(MEnv) 
+
+    rule <k> I:Id = V:ArrayList => Skip ... </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> (_ => V) ... </store>
+
+    // Incrementação             
+    rule <k> I:Id ++ => Skip ... </k>
+        <env> ... I |-> L ... </env>
+        <store> ... L |-> (V => V +Int 1) ... </store>
     context print HOLE:Printable, AEs:AExps
     
     rule <k> print P:Printable,AEs => print AEs ...</k>
