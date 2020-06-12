@@ -5,22 +5,18 @@ module RUBY-SYNTAX
 
     syntax Ids ::= List{Id, ","}
     syntax AExps ::= List{Printable, ","}
-    //syntax Stmts ::= List{Stmt,""}
 
-    syntax Printable ::= AExp  // | String | Bool
+    syntax Printable ::= AExp  
     
     syntax Skip ::= "Skip"
 
     syntax Block ::= Stmt
                     | Stmt Stmt [left]  
                     
-    
     syntax Assigner ::= Id "=" AExp [strict(2)]
                     | Id "=" BExp [strict(2)]
-                    | Id "=" SExp //[strict(2)]
+                    | Id "=" SExp
                     | Id "=" ArrayList
-
-
 
     // Booleano
     syntax BExp ::= Bool
@@ -34,14 +30,11 @@ module RUBY-SYNTAX
                     | BExp "and" BExp [seqstrict, left]
                     | BExp "or" BExp [seqstrict, left]
                     | "!" BExp [seqstrict, left]
-                    //| BExp BExp [left]
     
     // String
     syntax SExp ::= String
-                    //| "(" SExp ")" [bracket]
                     | SExp "+" SExp [seqstrict, left]
                     | Id
-
     
     // Aritmético
     syntax AExp ::= Int
@@ -71,7 +64,6 @@ module RUBY-SYNTAX
     syntax Stmt ::= AExp
                     | "if" BExp Block "end" [strict(1)]
                     | "if" BExp Block ElsIfStmt "end" [strict(1)] 
-                    //| "unless" BExp Block ElsIfStmt
                     | "while" BExp "do" Block "end" 
                     | "for" Id "in" ArrayList Block "end" 
                     | BExp
@@ -80,7 +72,6 @@ module RUBY-SYNTAX
                     | SExp
                     | IfTernary                  
                     | PrintExp
-                    //> PrintExp Stmt [strict(1)]
     
     syntax PrintExp ::= "print" AExps [left]
                         | "puts" AExps [left]
@@ -94,7 +85,6 @@ module RUBY-SYNTAX
 
     // Regras estuturais/utilização
     rule S1:Stmt S2:Stmt => S1 ~> S2 [structural]
-    //rule P:PrintExp S1:Stmt => P ~> Stmt
     rule Skip => .
    
     // Regras Estruturas de controle
@@ -109,10 +99,7 @@ module RUBY-SYNTAX
     // Regra de if ternário
     rule B:BExp ? S1:Stmt : S2:Stmt => if B S1 else S2 end
 
-
-
-     //regras de estrutura de repetição
-    //rule while B:BExp S:Stmt  => if  B  do  S  while B  S  end [structural]
+    //regras de estrutura de repetição
     rule while B:BExp do S:Stmt end => if  B  S  while B do S end  end [structural]
   
     rule <k>
@@ -157,8 +144,6 @@ module RUBY-SYNTAX
     rule false and true => false
     rule ! true => false
     rule ! false => true
-
-   
  
     //regra de ID
     rule <k> I:Id => V ... </k>
@@ -222,11 +207,6 @@ module RUBY-SYNTAX
        <output>... .List => ListItem(P) </output>  [print]
     
     rule puts .AExps => .  [structural]
-    
-    
-
-
-    //https://github.com/kframework/k/blob/master/k-distribution/tutorial/1_k/4_imp%2B%2B/lesson_8/imp.k  'print' para imprimir as informações
 
     configuration <T>
         <k> $PGM:Pgm </k>
